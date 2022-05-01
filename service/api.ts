@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
-import Router from 'next/router';
-import { destroyCookie, parseCookies, setCookie } from 'nookies';
+import { parseCookies, setCookie } from 'nookies';
 import { signOut } from '../contexts/AuthContext';
+import { AuthTokenError } from './errors/AuthTokenError';
 
 let isRefreshing = false;
 let failedRequestQueue = [];
@@ -26,7 +26,6 @@ export function setupAPIClient(ctx = undefined) {
 
                 const { 'nextauth.refreshToken': refreshToken } = cookies;
                 const originalConfig = error.config;
-                console.log(cookies)
 
                 if (!isRefreshing) {
                     isRefreshing = true;
@@ -35,7 +34,6 @@ export function setupAPIClient(ctx = undefined) {
                         refreshToken,
                     }).then(response => {
                         const { token } = response.data;
-                        console.log('teste', response)
 
                         setCookie(ctx, 'nextauth.token', token, {
                             maxAge: 60 * 60 * 24 * 30,//30 dias
@@ -79,6 +77,8 @@ export function setupAPIClient(ctx = undefined) {
                 //Deslogar o usuário
                 if (process.browser) {
                     signOut()
+                }else {
+                    return Promise.reject(new AuthTokenError())
                 }
             }
         }
